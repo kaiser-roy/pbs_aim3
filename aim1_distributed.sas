@@ -900,6 +900,13 @@ libname ref      "&root\data\aim3_individual\collated\reference" ;
     order by p.site, p.patid, p.px_group
     ;
 
+    * Read this into work separately so we can control var lengths ;
+    create table preg_px as
+    select compress(rp.px, '. ') as px length = 12 /* not sure on this length */
+        , put(rp.px_codetype, $pt.) as px_codetype length = 2
+    from ref.preg_px as rp
+    ;
+
     * Could be > 1 rec/person on this ;
     create table preg_px_events as
     select distinct p.site
@@ -907,9 +914,9 @@ libname ref      "&root\data\aim3_individual\collated\reference" ;
           , 'preg_px' as px_group
           , coalesce(p.px_date, p.admit_date) as event_date
     from  &inpx as p INNER JOIN
-          ref.preg_px as pp
-    on    p.px = compress(pp.px, '. ') AND
-          p.px_type = put(pp.px_codetype, $pt.)
+          preg_px as pp
+    on    p.px = pp.px AND
+          p.px_type = pp.px_codetype
     where coalesce(p.px_date, p.admit_date) > 0
     order by 1, 2, 3, 4
     ;
